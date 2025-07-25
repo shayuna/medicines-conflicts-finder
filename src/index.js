@@ -92,19 +92,36 @@ export default {
                 });
             }
             
-            // Check if the base64 size would be too large (base64 increases size by ~33%)
-            const base64Size = Math.ceil(imageBuffer.byteLength * 1.33);
-            const maxBase64Size = 50 * 1024 * 1024; // 50MB base64 limit
-            
-            if (base64Size > maxBase64Size) {
-                return new Response(JSON.stringify({ error: 'Image too large for processing. Please use a smaller image.' }), { 
-                    status: 413,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                        'Access-Control-Allow-Headers': 'Content-Type'
-                    }
+            // Only check base64 size for images larger than 5MB
+            if (imageBuffer.byteLength > 5 * 1024 * 1024) {
+                // Base64 encoding: 3 bytes become 4 characters, so size increases by 4/3 = 1.33
+                const base64Size = Math.ceil(imageBuffer.byteLength * 4 / 3);
+                const maxBase64Size = 20 * 1024 * 1024; // 20MB base64 limit
+                
+                console.log('Size check for large image:', {
+                    originalSize: imageBuffer.byteLength,
+                    estimatedBase64Size: base64Size,
+                    maxBase64Size: maxBase64Size,
+                    isTooLarge: base64Size > maxBase64Size
+                });
+                
+                if (base64Size > maxBase64Size) {
+                    return new Response(JSON.stringify({ 
+                        error: `Image too large for processing. Estimated base64 size: ${(base64Size / 1024 / 1024).toFixed(2)}MB. Please use a smaller image.` 
+                    }), { 
+                        status: 413,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                            'Access-Control-Allow-Headers': 'Content-Type'
+                        }
+                    });
+                }
+            } else {
+                console.log('Image size is acceptable:', {
+                    originalSize: imageBuffer.byteLength,
+                    sizeInKB: (imageBuffer.byteLength / 1024).toFixed(2) + 'KB'
                 });
             }
             
@@ -114,7 +131,7 @@ export default {
                 const uint8Array = new Uint8Array(imageBuffer);
                 
                 // For very large images, process in chunks to avoid memory issues
-                if (uint8Array.length > 5 * 1024 * 1024) { // 5MB threshold
+                if (uint8Array.length > 10 * 1024 * 1024) { // 10MB threshold
                     // Process in chunks of 1MB
                     const chunkSize = 1024 * 1024;
                     const chunks = [];
@@ -133,7 +150,7 @@ export default {
                 }
             } catch (base64Error) {
                 console.error('Error converting to base64:', base64Error);
-                return new Response(JSON.stringify({ error: 'Failed to process image. Please try with a smaller image.' }), { 
+                return new Response(JSON.stringify({ error: 'Failed to process image. Please try with a smaller image123.' }), { 
                     status: 400,
                     headers: {
                         'Content-Type': 'application/json',

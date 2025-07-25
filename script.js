@@ -49,7 +49,6 @@ function compressImage(file) {
         const img = new Image();
         
         img.onload = function() {
-            alert('img.onload');
             // Calculate new dimensions while maintaining aspect ratio
             const maxWidth = 1920;
             const maxHeight = 1080;
