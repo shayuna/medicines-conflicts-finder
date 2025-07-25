@@ -160,6 +160,26 @@ body {
     transform: scale(1.1);
 }
 
+.file-info {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.file-info p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.file-info span {
+    font-weight: 600;
+    color: #2d3748;
+}
+
 .analyze-btn {
     background: #48bb78;
     color: white;

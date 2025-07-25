@@ -3,6 +3,9 @@ const uploadArea = document.getElementById('uploadArea');
 const imageInput = document.getElementById('imageInput');
 const previewSection = document.getElementById('previewSection');
 const previewImage = document.getElementById('previewImage');
+const fileInfo = document.getElementById('fileInfo');
+const fileSize = document.getElementById('fileSize');
+const fileResolution = document.getElementById('fileResolution');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const resultsSection = document.getElementById('resultsSection');
 const resultContent = document.getElementById('resultContent');
@@ -38,11 +41,61 @@ function setupEventListeners() {
     });
 }
 
+// Function to compress image
+function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions while maintaining aspect ratio
+            const maxWidth = 1920;
+            const maxHeight = 1080;
+            let { width, height } = img;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw the image on canvas
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to blob with compression
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    // Create a new file with compressed data
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                } else {
+                    reject(new Error('Failed to compress image'));
+                }
+            }, 'image/jpeg', 0.8); // 80% quality
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = URL.createObjectURL(file);
+    });
+}
+
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
-        selectedFile = file;
-        displayPreview(file);
+        processImageFile(file);
     } else {
         showError('אנא בחר קובץ תמונה תקין.');
     }
@@ -66,11 +119,36 @@ function handleDrop(event) {
     if (files.length > 0) {
         const file = files[0];
         if (file.type.startsWith('image/')) {
-            selectedFile = file;
-            displayPreview(file);
+            processImageFile(file);
         } else {
             showError('אנא שחרר קובץ תמונה תקין.');
         }
+    }
+}
+
+async function processImageFile(file) {
+    try {
+        // Check file size first
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            showError(`הקובץ גדול מדי. גודל מקסימלי: 10MB. גודל נוכחי: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+            return;
+        }
+        
+        // Compress the image
+        const compressedFile = await compressImage(file);
+        selectedFile = compressedFile;
+        displayPreview(compressedFile);
+        
+        // Show compression info if significant
+        const compressionRatio = ((file.size - compressedFile.size) / file.size * 100).toFixed(1);
+        if (compressionRatio > 10) {
+            console.log(`Image compressed by ${compressionRatio}%`);
+        }
+        
+    } catch (error) {
+        console.error('Error processing image:', error);
+        showError('שגיאה בעיבוד התמונה. אנא נסה שוב.');
     }
 }
 
@@ -91,6 +169,7 @@ function removeImage() {
     selectedFile = null;
     imageInput.value = '';
     previewSection.style.display = 'none';
+    fileInfo.style.display = 'none';
     resultsSection.style.display = 'none';
     resultContent.innerHTML = '';
     resultContent.className = 'result-content';
@@ -115,7 +194,18 @@ async function analyzeImage() {
         });
         
         if (!response.ok) {
-            throw new Error(`שגיאת HTTP! סטטוס: ${response.status}`);
+            let errorMessage = `שגיאת HTTP! סטטוס: ${response.status}`;
+            
+            // Handle specific error cases
+            if (response.status === 413) {
+                errorMessage = 'התמונה גדולה מדי. אנא השתמש בתמונה קטנה יותר או דחוס יותר.';
+            } else if (response.status === 429) {
+                errorMessage = 'יותר מדי בקשות. אנא המתן מעט ונסה שוב.';
+            } else if (response.status >= 500) {
+                errorMessage = 'שגיאת שרת. אנא נסה שוב מאוחר יותר.';
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const data = await response.json();
