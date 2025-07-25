@@ -130,27 +130,28 @@ export default {
             try {
                 const uint8Array = new Uint8Array(imageBuffer);
                 
-                // For very large images, process in chunks to avoid memory issues
-                if (uint8Array.length > 10 * 1024 * 1024) { // 10MB threshold
-                    // Process in chunks of 1MB
-                    const chunkSize = 1024 * 1024;
-                    const chunks = [];
-                    
-                    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-                        const chunk = uint8Array.slice(i, i + chunkSize);
-                        const chunkString = String.fromCharCode(...chunk);
-                        chunks.push(chunkString);
-                    }
-                    
-                    const fullString = chunks.join('');
-                    base64Image = btoa(fullString);
-                } else {
-                    // For smaller images, use the direct method
-                    base64Image = btoa(String.fromCharCode(...uint8Array));
+                // Use a more robust base64 conversion method that works with any size
+                const chunkSize = 8192; // 8KB chunks
+                const chunks = [];
+                
+                for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                    const chunk = uint8Array.slice(i, i + chunkSize);
+                    const chunkString = String.fromCharCode.apply(null, chunk);
+                    chunks.push(chunkString);
                 }
+                
+                const fullString = chunks.join('');
+                base64Image = btoa(fullString);
+                
+                console.log('Base64 conversion successful:', {
+                    originalSize: uint8Array.length,
+                    base64Size: base64Image.length,
+                    chunksUsed: chunks.length
+                });
+                
             } catch (base64Error) {
                 console.error('Error converting to base64:', base64Error);
-                return new Response(JSON.stringify({ error: 'Failed to process image. Please try with a smaller image123.' }), { 
+                return new Response(JSON.stringify({ error: 'Failed to process image. Please try with a different image155.' }), { 
                     status: 400,
                     headers: {
                         'Content-Type': 'application/json',
@@ -193,7 +194,7 @@ export default {
                         }
                     ],
                     max_tokens: 2500,
-                    temperature: 0.7
+                    temperature: 0,
                 });
             } catch (openaiError) {
                 console.error('OpenAI API error:', openaiError);
