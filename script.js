@@ -49,6 +49,7 @@ function compressImage(file) {
         const img = new Image();
         
         img.onload = function() {
+            alert('img.onload');
             // Calculate new dimensions while maintaining aspect ratio
             const maxWidth = 1920;
             const maxHeight = 1080;
@@ -196,14 +197,35 @@ async function analyzeImage() {
         if (!response.ok) {
             let errorMessage = `שגיאת HTTP! סטטוס: ${response.status}`;
             
+            // Try to get more detailed error information
+            try {
+                const errorData = await response.json();
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (parseError) {
+                console.log('Could not parse error response:', parseError);
+            }
+            
             // Handle specific error cases
             if (response.status === 413) {
                 errorMessage = 'התמונה גדולה מדי. אנא השתמש בתמונה קטנה יותר או דחוס יותר.';
             } else if (response.status === 429) {
                 errorMessage = 'יותר מדי בקשות. אנא המתן מעט ונסה שוב.';
+            } else if (response.status === 405) {
+                errorMessage = 'שגיאת שיטת בקשה. אנא נסה שוב.';
+            } else if (response.status === 400) {
+                errorMessage = errorMessage || 'שגיאה בבקשה. אנא בדוק את התמונה ונסה שוב.';
             } else if (response.status >= 500) {
                 errorMessage = 'שגיאת שרת. אנא נסה שוב מאוחר יותר.';
             }
+            
+            console.error('HTTP Error Details:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+                errorMessage: errorMessage
+            });
             
             throw new Error(errorMessage);
         }
