@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תרופות מתנגשות (לא גרסת המשחק, גרסת החיים)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">תרופות מתנגשות (לא גרסת המשחק, גרסת החיים)</h1>
+            <p class="subtitle">העלה תמונה של התרופות שלך לניתוח קונפליקטים אפשריים</p>
+        </header>
+
+        <main class="main-content">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7,10 12,15 17,10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <h3>העלה תמונת תרופות</h3>
+                        <p>גרור ושחרר את התמונה כאן, או לחץ לדפדוף</p>
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                        <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                            בחר קובץ
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preview-section" id="previewSection" style="display: none;">
+                    <h3>תצוגה מקדימה</h3>
+                    <div class="image-preview">
+                        <img id="previewImage" alt="תצוגה מקדימה">
+                        <button class="remove-btn" onclick="removeImage()">×</button>
+                    </div>
+                    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()">
+                        <span class="btn-text">נתח תמונה</span>
+                        <div class="spinner" id="spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h3>תוצאות הניתוח</h3>
+                <div class="result-content" id="resultContent">
+                    <!-- התוצאות יוצגו כאן -->
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 תרופות מתנגשות (לא גרסת המשחק, גרסת החיים). השתמש באחריות.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
